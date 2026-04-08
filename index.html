@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jackpot Combo – Your Lucky Game Awaits</title>
+  <meta name="description" content="Jackpot Combo – Philippines' premier iGaming platform. Slots, Live Casino, E-games, Fishing Games and more." />
+  <link rel="stylesheet" href="css/main.css" />
+  <!-- Icons via Unicode / emoji for zero-dependency -->
+</head>
+<body>
+
+<!-- ===== OVERLAY (mobile sidebar) ===== -->
+<div class="overlay" id="overlay"></div>
+
+<!-- ===== SIDEBAR TOGGLE ===== -->
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">☰</button>
+
+<!-- ===== TOP NAV ===== -->
+<nav class="top-nav" id="topNav">
+  <div class="top-nav-logo">
+    <span class="logo-icon">🎰</span>
+    <span>Jackpot Combo</span>
+  </div>
+  <div class="nav-tabs" id="navTabs"></div>
+  <div class="nav-right">
+    <div class="balance-chip">
+      <span>₱</span>
+      <span id="navBalance">0.00</span>
+      <span style="font-size:0.8rem;opacity:0.7">↻</span>
+    </div>
+    <button class="icon-btn" onclick="showToast('No new notifications','info')" aria-label="Notifications">
+      🔔
+      <span class="notif-dot"></span>
+    </button>
+    <!-- Rewards Gift Button + Panel -->
+    <div class="rewards-wrap" id="rewardsWrap">
+      <button class="icon-btn rewards-trigger" id="rewardsTrigger" onclick="toggleRewardsPanel()" aria-label="My Rewards">
+        🎁
+        <span class="rewards-badge" id="rewardsBadge">3</span>
+      </button>
+      <!-- Rewards Dropdown Panel -->
+      <div class="rewards-panel" id="rewardsPanel">
+        <div class="rp-hdr">
+          <span class="rp-title">🎁 My Rewards</span>
+          <button class="rp-close" onclick="closeRewardsPanel()">✕</button>
+        </div>
+        <div class="rp-body" id="rpBody"><!-- rendered by JS --></div>
+        <div class="rp-footer">
+          <button class="rp-all-btn" onclick="navigateTo('rewards'); closeRewardsPanel()">All Rewards →</button>
+        </div>
+      </div>
+    </div>
+    <button class="avatar-btn" onclick="showToast('Profile coming soon!','info')">
+      <div class="avatar"><span id="navAvatarInitial">D</span></div>
+      <span class="avatar-name" id="navAvatarName">d7arp09ivj...</span>
+    </button>
+    <button class="icon-btn" onclick="showToast('Support chat coming soon!','info')" style="font-size:1.2rem">🎧</button>
+  </div>
+</nav>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar" id="sidebar">
+  <!-- User -->
+  <div class="sidebar-user">
+    <div class="sidebar-ava"><span id="sbAvatarInitial">D</span></div>
+    <div class="user-info hide-collapsed">
+      <div class="user-name" id="sbUserName">d7arp09ivj3s73c...</div>
+      <div class="user-id" id="sbUserId">ID: d7arp09ivj3s7...</div>
+    </div>
+  </div>
+
+  <!-- Balance -->
+  <div class="balance-section hide-collapsed">
+    <div class="bal-label">Balance <span style="font-size:0.8em">ℹ️</span></div>
+    <div class="bal-amount">₱<span id="sbBal">0.00</span> <span style="font-size:0.75rem;opacity:0.6">↻</span></div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="sidebar-action-btns">
+    <button class="btn-dep" onclick="navigateTo('wallet'); setTimeout(()=>switchWalletTab('deposit'),50)">
+      <span>💳</span><span class="btn-text hide-collapsed">Deposit</span>
+    </button>
+    <button class="btn-wd" onclick="navigateTo('wallet'); setTimeout(()=>switchWalletTab('withdraw'),50)">
+      <span>💸</span><span class="btn-text hide-collapsed">Withdraw</span>
+    </button>
+  </div>
+
+  <!-- Nav -->
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-page="lobby" onclick="navigateTo('lobby')">
+      <span class="nav-icon">🏠</span>
+      <span class="hide-collapsed">Casino</span>
+    </button>
+    <button class="nav-item" onclick="showToast('Providers page coming soon!','info')">
+      <span class="nav-icon">🎮</span>
+      <span class="hide-collapsed">Provider</span>
+    </button>
+    <button class="nav-item" onclick="showToast('Support coming soon!','info')">
+      <span class="nav-icon">🎧</span>
+      <span class="hide-collapsed">Support</span>
+    </button>
+    <button class="nav-item" onclick="showToast('About Us coming soon!','info')">
+      <span class="nav-icon">⭐</span>
+      <span class="hide-collapsed">About Us</span>
+    </button>
+    <button class="nav-item" style="margin-top:auto" onclick="showToast('Logged out!','success')">
+      <span class="nav-icon">🚪</span>
+      <span class="hide-collapsed">Logout</span>
+    </button>
+  </nav>
+</aside>
+
+<!-- ===== APP WRAP ===== -->
+<div class="app-wrap">
+  <main class="main" id="mainContent">
+
+    <!-- =========================================
+         PAGE: LOBBY
+    ========================================= -->
+    <div class="page" id="page-lobby">
+      <!-- Banner -->
+      <div class="banner-wrap">
+        <div class="banner-track" id="bannerTrack"></div>
+        <button class="barrow prev" onclick="prevBanner()">‹</button>
+        <button class="barrow next" onclick="nextBanner()">›</button>
+        <div class="banner-dots" id="bannerDots"></div>
+      </div>
+
+      <!-- Search -->
+      <div class="search-wrap">
+        <div class="search-box">
+          <span class="search-ico">🔍</span>
+          <input type="text" placeholder="Search games..." id="searchInput" oninput="handleSearch(this.value)" />
+        </div>
+      </div>
+
+      <!-- Game Sections -->
+      <div class="lobby-body">
+        <div id="gameSections"></div>
+      </div>
+    </div>
+
+    <!-- =========================================
+         PAGE: WALLET
+    ========================================= -->
+    <div class="page" id="page-wallet">
+      <div class="page-hdr">
+        <button class="back-btn" onclick="navigateTo('lobby')">←</button>
+        <div>
+          <div class="page-ttl">Wallet</div>
+          <div class="page-ttl-line"></div>
+        </div>
+      </div>
+
+      <div class="wallet-wrap">
+        <!-- Wallet Header Card -->
+        <div class="wallet-hdr">
+          <div>
+            <div class="w-bal-lbl">Balance <span style="font-size:0.85em">ℹ️</span> <span style="font-size:0.8em;opacity:0.7">↻</span></div>
+            <div class="w-bal-amt">₱ 0.00</div>
+          </div>
+          <div class="w-links">
+            <button class="w-link" onclick="showToast('Fund Account coming soon!','info')">
+              <div class="w-link-ico">💳</div>
+              <span class="w-link-lbl">Fund Account</span>
+            </button>
+            <button class="w-link" onclick="navigateTo('record')">
+              <div class="w-link-ico">📋</div>
+              <span class="w-link-lbl">Record Center</span>
+            </button>
+            <button class="w-link" onclick="showToast('KYC verification coming soon!','info')">
+              <div class="w-link-ico">👤</div>
+              <span class="w-link-lbl">KYC</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabs Panel -->
+        <div class="wallet-panel">
+          <!-- Tab sidebar -->
+          <div class="wallet-tabs">
+            <button class="w-tab active" data-tab="deposit" onclick="switchWalletTab('deposit')">Deposit</button>
+            <button class="w-tab" data-tab="withdraw" onclick="switchWalletTab('withdraw')">Withdraw</button>
+          </div>
+
+          <!-- Tab content -->
+          <div class="wallet-body">
+
+            <!-- DEPOSIT -->
+            <div class="tab-content active" id="tc-deposit">
+
+              <!-- ===== CHOOSE YOUR BONUS ===== -->
+              <div class="bonus-section">
+                <div class="bonus-select-row">
+                  <label class="form-lbl" style="margin-bottom:0">Choose your bonus</label>
+                  <span class="bonus-min-dep" id="bonusMinDep">Min.deposit: ₱500</span>
+                </div>
+                <div class="bonus-dropdown-wrap" id="bonusDropdownWrap">
+                  <button class="bonus-trigger" id="bonusTrigger" onclick="toggleBonusDropdown()">
+                    <span class="bonus-trigger-icon" id="bonusTriggerIcon">🎁</span>
+                    <span class="bonus-trigger-text" id="bonusTriggerText">Loading...</span>
+                    <span class="bonus-trigger-chevron">▾</span>
+                  </button>
+                  <div class="bonus-options" id="bonusOptions"></div>
+                </div>
+                <div class="bonus-info-box" id="bonusInfoBox">
+                  <div class="bonus-info-content">
+                    <span class="bonus-info-icon">ℹ️</span>
+                    <span class="bonus-info-text" id="bonusInfoText"></span>
+                    <button class="bonus-close" onclick="closeBonusInfo()">✕</button>
+                  </div>
+                  <button class="bonus-tnc-link" id="bonusTncLink" onclick="openTnCModal()">Bonus T&amp;C</button>
+                </div>
+              </div>
+
+              <label class="form-lbl">Payment Methods</label>
+              <div class="pay-methods" id="depMethods"></div>
+
+              <label class="form-lbl">Deposit Amount</label>
+              <div class="amt-grid" id="depAmtGrid"></div>
+
+              <div class="amt-input-wrap">
+                <span class="amt-currency"><span>₱</span></span>
+                <input class="amt-input" type="number" id="depAmtInput" placeholder="Enter Amount: 500 – 50,000" min="500" max="50000" />
+              </div>
+
+              <button class="submit-btn" onclick="submitDeposit()">Submit</button>
+            </div>
+
+            <!-- WITHDRAW -->
+            <div class="tab-content" id="tc-withdraw">
+              <!-- Wallet Breakdown Card -->
+              <div class="wb-card" id="walletBreakdown">
+                <div class="wb-row">
+                  <span class="wb-label">💰 Total Balance</span>
+                  <div class="wb-right">
+                    <span class="wb-amount" id="wbTotal">₱0.00</span>
+                    <span class="wb-lock" id="wbTotalLock">🔒</span>
+                  </div>
+                </div>
+                <div class="wb-divider"></div>
+                <div class="wb-row wb-avail-row">
+                  <span class="wb-avail-label">Available to Withdraw</span>
+                  <span class="wb-avail-amt" id="wbAvail">₱0.00</span>
+                </div>
+              </div>
+
+              <!-- ===== TURNOVER REQUIREMENT ===== -->
+              <div id="turnoverSection">
+
+                <!-- Demo Scenario Toggle (for testing/preview) -->
+                <div class="turnover-demo-bar">
+                  <span class="turnover-demo-label">🔧 Preview:</span>
+                  <select class="turnover-demo-select" id="turnoverScenario" onchange="applyTurnoverScenario(this.value)">
+                    <option value="no_bonus_0">No Bonus · Not started (0%)</option>
+                    <option value="no_bonus_partial">No Bonus · 60% wagered</option>
+                    <option value="bonus_partial">100% Bonus · 32.5% wagered</option>
+                    <option value="bonus_high">80% Bonus · 75% wagered</option>
+                    <option value="complete">✅ Turnover Complete</option>
+                  </select>
+                </div>
+
+                <!-- INCOMPLETE STATE -->
+                <div class="to-card" id="toCard">
+                  <div class="to-hdr-simple">
+                    <span class="to-warn-ico">⚠️</span>
+                    <span class="to-hdr-title">Wager Requirement</span>
+                  </div>
+                  <div class="to-req-amount" id="toReqAmount">₱1,000</div>
+                  <div class="to-progress-wrap">
+                    <div class="to-progress-row">
+                      <span class="to-progress-desc" id="toProgressDesc">Wager ₱1,000 to withdraw</span>
+                      <span class="to-pct-txt" id="toPctTxt">0.00%</span>
+                    </div>
+                    <div class="to-bar-track">
+                      <div class="to-bar-fill" id="toBarFill" style="width:0%"></div>
+                    </div>
+                  </div>
+                  <button class="to-learn-more-btn" onclick="openLearnMoreModal()">Learn more →</button>
+                </div>
+
+              </div>
+
+              <label class="form-lbl" style="margin-top:18px">Payment Methods</label>
+              <div class="pay-methods" id="wdMethods"></div>
+
+              <button class="link-acc-btn">
+                <span>🔗</span> Link Account
+              </button>
+
+              <label class="form-lbl">Withdrawal Amount</label>
+              <div class="amt-input-wrap" id="wdAmtWrap">
+                <span class="amt-currency"><span>₱</span></span>
+                <input class="amt-input" type="number" id="wdAmtInput" placeholder="Withdrawal Amount min ₱50.00" min="50" />
+                <button style="border:none;background:transparent;color:var(--primary);font-weight:700;font-size:0.82rem;cursor:pointer" onclick="showToast('Max set!','info')">Max</button>
+              </div>
+
+              <button class="submit-btn" id="wdSubmitBtn" onclick="submitWithdraw()">Submit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================
+         PAGE: RECORD CENTER
+    ========================================= -->
+    <div class="page" id="page-record">
+      <div class="page-hdr">
+        <button class="back-btn" onclick="navigateTo('wallet')">←</button>
+        <div>
+          <div class="page-ttl">Record Center</div>
+          <div class="page-ttl-line"></div>
+        </div>
+      </div>
+
+      <div class="record-wrap">
+        <div class="record-panel">
+          <!-- Tabs -->
+          <div class="record-tabs">
+            <button class="rec-tab active" data-tab="transactions" onclick="switchRecTab('transactions')">Transactions</button>
+            <button class="rec-tab" data-tab="game" onclick="switchRecTab('game')">Game</button>
+            <button class="rec-tab" data-tab="promotions" onclick="switchRecTab('promotions')">Promotions</button>
+          </div>
+
+          <!-- Body -->
+          <div class="record-body">
+            <div class="rec-filters">
+              <div class="date-grp">
+                <input class="date-inp" type="text" id="dateFrom" placeholder="YYYY/MM/DD" />
+                <span class="date-sep">📅</span>
+              </div>
+              <span style="color:var(--t3);font-size:0.82rem">to</span>
+              <div class="date-grp">
+                <input class="date-inp" type="text" id="dateTo" placeholder="YYYY/MM/DD" />
+                <span class="date-sep">📅</span>
+              </div>
+              <button class="filter-btn" onclick="showToast('Filter applied!','success')">⚡</button>
+            </div>
+
+            <!-- Transactions -->
+            <div class="rec-content active" id="rc-transactions">
+              <div class="empty-state">
+                <div class="empty-ico">🔍</div>
+                <div class="empty-txt">No Data</div>
+              </div>
+            </div>
+
+            <!-- Game -->
+            <div class="rec-content" id="rc-game" style="display:none">
+              <div class="empty-state">
+                <div class="empty-ico">🎮</div>
+                <div class="empty-txt">No Data</div>
+              </div>
+            </div>
+
+            <!-- Promotions -->
+            <div class="rec-content" id="rc-promotions" style="display:none">
+              <div class="empty-state">
+                <div class="empty-ico">🎁</div>
+                <div class="empty-txt">No Data</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================
+         PAGE: REWARDS
+    ========================================= -->
+    <div class="page" id="page-rewards">
+      <div class="page-hdr">
+        <button class="back-btn" onclick="navigateTo('lobby')">←</button>
+        <div>
+          <div class="page-ttl">Rewards</div>
+          <div class="page-ttl-line"></div>
+        </div>
+      </div>
+      <div class="rewards-page-wrap" id="rewardsPageWrap">
+        <!-- rendered by JS -->
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ===== MOBILE BOTTOM NAV ===== -->
+<nav class="mob-nav">
+  <div class="mob-nav-items">
+    <button class="mob-nav-item active" data-page="lobby" onclick="navigateTo('lobby')">
+      <span class="mni">🏠</span>
+      <span>Casino</span>
+    </button>
+    <button class="mob-nav-item" data-page="wallet" onclick="navigateTo('wallet');switchWalletTab('deposit')">
+      <span class="mni">💳</span>
+      <span>Deposit</span>
+    </button>
+    <button class="mob-nav-item" data-page="wallet-wd" onclick="navigateTo('wallet');switchWalletTab('withdraw')">
+      <span class="mni">💸</span>
+      <span>Withdraw</span>
+    </button>
+    <button class="mob-nav-item" data-page="rewards" onclick="navigateTo('rewards')">
+      <span class="mni">🎁</span>
+      <span>Rewards</span>
+    </button>
+    <button class="mob-nav-item" data-page="record" onclick="navigateTo('record')">
+      <span class="mni">📋</span>
+      <span>Records</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ===== FAB ===== -->
+<div class="fab-wrap">
+  <button class="fab fab-sup" onclick="showToast('Support chat coming soon!','info')" aria-label="Support">🎧</button>
+  <button class="fab fab-set" onclick="showToast('Settings coming soon!','info')" aria-label="Settings">⚙️</button>
+</div>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ===== T&C MODAL ===== -->
+<div class="modal-overlay" id="tncModal" onclick="closeTnCModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <h3 class="modal-title">Bonus Terms &amp; Conditions</h3>
+      <button class="modal-close" onclick="closeTnCModal()">✕</button>
+    </div>
+    <div class="modal-body" id="tncModalBody"></div>
+  </div>
+</div>
+
+<!-- ===== LEARN MORE MODAL (Wager Requirement) ===== -->
+<div class="modal-overlay" id="learnMoreModal" onclick="closeLearnMoreModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-hdr modal-hdr-warn">
+      <h3 class="modal-title">⚠️ Why is withdrawal unavailable?</h3>
+      <button class="modal-close modal-close-dark" onclick="closeLearnMoreModal()">✕</button>
+    </div>
+    <div class="modal-body" id="learnMoreBody">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+  // handleSearch (inline for simplicity)
+  function handleSearch(val) {
+    const q = val.trim().toLowerCase();
+    document.querySelectorAll('.game-card').forEach(card => {
+      const lbl = card.querySelector('.card-label').textContent.toLowerCase();
+      card.style.display = (!q || lbl.includes(q)) ? '' : 'none';
+    });
+    document.querySelectorAll('.game-sec').forEach(sec => {
+      const visible = [...sec.querySelectorAll('.game-card')].some(c => c.style.display !== 'none');
+      sec.style.display = visible ? '' : 'none';
+    });
+  }
+
+  // Record tab - handle display
+  function switchRecTab(tab) {
+    S.recTab = tab;
+    document.querySelectorAll('.rec-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.rec-content').forEach(c => {
+      c.style.display = (c.id === 'rc-' + tab) ? 'block' : 'none';
+    });
+  }
+</script>
+</body>
+</html>
