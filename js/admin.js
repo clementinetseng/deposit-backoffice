@@ -222,7 +222,13 @@ function toggleStatusRequest(id, currentStatus, checkbox) {
       </div>
     `;
   } else {
-    // Attempting to ENABLE
+    // Attempting to ENABLE - Perform Validation
+    const errors = validatePromotionData(promo, 'enable');
+    if (errors.length > 0) {
+      alert("Unable to enable this promotion. Please complete the required fields first.");
+      return;
+    }
+
     modalContainer.className = 'modal-overlay modal-success open';
     modalBox.innerHTML = `
       <div class="modal-header">✅ Confirm Activation</div>
@@ -373,11 +379,11 @@ function updateStepperUI(container) {
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Start Time <span class="req">*</span></label>
-          <input type="datetime-local" class="form-control" value="2026-04-08T06:34" />
+          <input type="datetime-local" class="form-control" id="f_start_time" value="2026-04-08T06:34" />
         </div>
         <div class="form-group" id="endTimeGroup" style="display:none">
           <label class="form-label">End Time <span class="req">*</span></label>
-          <input type="datetime-local" class="form-control" />
+          <input type="datetime-local" class="form-control" id="f_end_time" />
         </div>
       </div>
       
@@ -406,11 +412,11 @@ function updateStepperUI(container) {
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Min Deposit <span class="req">*</span></label>
-          <input type="number" class="form-control" value="0" />
+          <input type="number" class="form-control" id="f_min_dep" value="0" />
         </div>
         <div class="form-group">
           <label class="form-label">Max Deposit</label>
-          <input type="number" class="form-control" />
+          <input type="number" class="form-control" id="f_max_dep" />
         </div>
       </div>
       
@@ -437,7 +443,14 @@ function updateStepperUI(container) {
           <label class="radio-label"><input type="radio" name="scope" value="all" checked class="radio-input" onchange="toggleScopeFields(this)"> All Players</label>
           <label class="radio-label"><input type="radio" name="scope" value="include" class="radio-input" onchange="toggleScopeFields(this)"> Include Specific Players</label>
           <label class="radio-label"><input type="radio" name="scope" value="exclude" class="radio-input" onchange="toggleScopeFields(this)"> Exclude Specific Players</label>
+          <label class="radio-label"><input type="radio" name="scope" value="abtest" class="radio-input" onchange="toggleScopeFields(this)"> AB Test (Account Suffix)</label>
         </div>
+      </div>
+
+      <div class="form-group" id="playerABTestGroup" style="display:none">
+        <label class="form-label">Target Account Suffixes (One digit per line)</label>
+        <textarea class="form-control" rows="3" id="f_ab_suffixes" placeholder="e.g.&#10;1&#10;3&#10;5" style="width:120px; font-family:monospace; font-size:1.1rem; letter-spacing:2px"></textarea>
+        <div style="font-size:0.8rem; color:var(--text-gray); margin-top:8px">Only players whose Account ID ends with one of these digits will be eligible. Press Enter for multiple values.</div>
       </div>
 
       <div class="form-group" id="playerListGroup" style="display:none">
@@ -698,8 +711,9 @@ function updateStepperUI(container) {
           ${currentStep > 1 ? '← Back' : 'Cancel'}
         </button>
         <div style="display:flex;gap:12px">
-          <button class="btn btn-outline">Save</button>
-          ${currentStep < 4 ? `<button class="btn btn-primary" onclick="changeStep(1)">Next →</button>` : `<button class="btn btn-primary" style="background:#10B981;border-color:#10B981" onclick="submitPromotion()">Publish</button>`}
+          ${currentStep < 4 ? `<button class="btn btn-primary" onclick="changeStep(1)">Next →</button>` : `
+            <button class="btn btn-primary" onclick="submitPromotionAction('save')">Save</button>
+          `}
         </div>
       </div>
     </div>
@@ -725,15 +739,22 @@ function togglePeriodFields(radio) {
 
 function toggleScopeFields(radio) {
   const playerListGroup = document.getElementById('playerListGroup');
+  const playerABTestGroup = document.getElementById('playerABTestGroup');
   const playerListLabel = document.getElementById('playerListLabel');
   const playerScopeNote = document.getElementById('playerScopeNote');
-  if (playerListGroup && playerListLabel) {
-    if (radio.value === 'all') {
-      playerListGroup.style.display = 'none';
-    } else {
+
+  if (playerListGroup) playerListGroup.style.display = 'none';
+  if (playerABTestGroup) playerABTestGroup.style.display = 'none';
+
+  if (radio.value === 'all') {
+    // Both hidden
+  } else if (radio.value === 'abtest') {
+    if (playerABTestGroup) playerABTestGroup.style.display = 'block';
+  } else {
+    if (playerListGroup) {
       playerListGroup.style.display = 'block';
-      playerListLabel.textContent = radio.value === 'include' ? 'Player IDs to Include (one per line)' : 'Player IDs to Exclude (one per line)';
-      playerScopeNote.textContent = radio.value === 'include' ? 'Only players in this list can claim this promotion' : 'Players in this list cannot claim this promotion';
+      if (playerListLabel) playerListLabel.textContent = radio.value === 'include' ? 'Player IDs to Include (one per line)' : 'Player IDs to Exclude (one per line)';
+      if (playerScopeNote) playerScopeNote.textContent = radio.value === 'include' ? 'Only players in this list can claim this promotion' : 'Players in this list cannot claim this promotion';
     }
   }
 }
@@ -749,8 +770,8 @@ function addProviderRow() {
   div.style.marginBottom = '8px';
   div.style.alignItems = 'center';
   div.innerHTML = `
-    <select class="form-control" style="flex:2">
-      <option disabled selected>Select Provider</option>
+    <select class="form-control f-provider-id" style="flex:2">
+      <option disabled selected value="">Select Provider</option>
       <option>Pragmatic Play</option>
       <option>Evolution</option>
       <option>NetEnt</option>
@@ -759,7 +780,7 @@ function addProviderRow() {
       <option>Playtech</option>
     </select>
     <div style="position:relative; flex:1">
-      <input type="number" class="form-control" value="100" />
+      <input type="number" class="form-control f-provider-rate" value="100" />
       <span style="position:absolute;right:12px;top:10px;color:var(--text-gray);font-size:0.8rem">%</span>
     </div>
     <button class="btn" style="color:#ef4444; border:none; background:none; font-size:1.2rem; cursor:pointer" onclick="this.parentElement.remove()">🗑️</button>
@@ -778,9 +799,9 @@ function addGameRow() {
   div.style.marginBottom = '8px';
   div.style.alignItems = 'center';
   div.innerHTML = `
-    <input type="text" class="form-control" placeholder="GAME CODE" style="flex:3" />
+    <input type="text" class="form-control f-game-id" placeholder="GAME CODE" style="flex:3" />
     <div style="position:relative; flex:1">
-      <input type="number" class="form-control" value="100" />
+      <input type="number" class="form-control f-game-rate" value="100" />
       <span style="position:absolute;right:12px;top:10px;color:var(--text-gray);font-size:0.8rem">%</span>
     </div>
     <button class="btn" style="color:#ef4444; border:none; background:none; font-size:1.2rem; cursor:pointer" onclick="this.parentElement.remove()">🗑️</button>
@@ -889,51 +910,172 @@ function generateUniqueID() {
   return `PRM-${date}-${random}`;
 }
 
-function submitPromotion() {
-  const promoId = generateUniqueID();
-  const now = new Date();
-  const timestamp = now.getFullYear() + '-' + 
-                    (now.getMonth()+1).toString().padStart(2, '0') + '-' + 
-                    now.getDate().toString().padStart(2, '0') + ' ' + 
-                    now.getHours().toString().padStart(2, '0') + ':' + 
-                    now.getMinutes().toString().padStart(2, '0') + ':' + 
-                    now.getSeconds().toString().padStart(2, '0');
+function collectPromotionData() {
+  const providers = [];
+  document.querySelectorAll('#providerOverridesContainer .form-row').forEach(row => {
+    const id = row.querySelector('.f-provider-id')?.value;
+    const rate = row.querySelector('.f-provider-rate')?.value;
+    if (id) providers.push({ id, rate });
+  });
 
-  const payload = {
-    id: promoId,
-    name: document.getElementById('f_tag')?.value || 'Title',
+  const games = [];
+  document.querySelectorAll('#gameOverridesContainer .form-row').forEach(row => {
+    const id = row.querySelector('.f-game-id')?.value;
+    const rate = row.querySelector('.f-game-rate')?.value;
+    if (id) games.push({ id, rate });
+  });
+
+  const abSuffixes = [];
+  const suffixInput = document.getElementById('f_ab_suffixes')?.value || '';
+  suffixInput.split('\n').forEach(line => {
+    const digit = line.trim().charAt(0);
+    if (digit !== '' && !isNaN(digit)) {
+      abSuffixes.push(digit);
+    }
+  });
+
+  return {
+    id: generateUniqueID(),
+    name: document.getElementById('f_title')?.value || '',
     type: 'Deposit Bonus',
-    start: document.getElementById('f_start_date')?.value || new Date().toISOString().split('T')[0],
-    end: document.getElementById('f_end_date')?.value || '2099-12-31',
-    cost: '$0.00',
-    claims: '0 / 0',
-    ui: {
-      tag: document.getElementById('f_promo_tag')?.value || 'FIRST DEPOSIT',
-      icon: document.getElementById('f_icon')?.value || '🎁',
-      title: document.getElementById('f_tag')?.value || 'Title',
-      subtitle: document.getElementById('f_desc')?.value || 'Subtitle',
-      infoBox: document.getElementById('f_info_box')?.value || '',
-      tncMarkdown: document.getElementById('f_tnc_md')?.value || ''
-    },
-    reward: { 
+    start: document.getElementById('f_start_time')?.value || '',
+    end: document.getElementById('f_end_time')?.value || 'Long-term',
+    minDep: document.getElementById('f_min_dep')?.value,
+    maxDep: document.getElementById('f_max_dep')?.value,
+    scope: document.querySelector('input[name="scope"]:checked')?.value || 'all',
+    playerIds: document.getElementById('f_player_ids')?.value || '',
+    abSuffixes: abSuffixes,
+    reward: {
       type: document.querySelector('input[name="bval"]:checked')?.value || 'percent',
-      amount: document.getElementById('f_bonus_amt')?.value || 0,
-      percentage: document.getElementById('f_bonus_pct')?.value || 100,
-      cap: document.getElementById('f_bonus_cap')?.value || 0
+      amount: document.getElementById('f_bonus_amt')?.value,
+      percentage: document.getElementById('f_bonus_pct')?.value,
+      cap: document.getElementById('f_bonus_cap')?.value
     },
     wagering: {
-      model: document.getElementById('f_wr_model')?.value || 'Principal + Bonus',
-      multiplier: document.getElementById('f_wr_mult')?.value || 30
+      model: document.getElementById('f_wr_model')?.value,
+      multiplier: document.getElementById('f_wr_mult')?.value
     },
-    status: true,
+    ui: {
+      tag: document.getElementById('f_promo_tag')?.value,
+      icon: document.getElementById('f_icon')?.value,
+      title: document.getElementById('f_tag')?.value,
+      summary: document.getElementById('f_desc')?.value,
+      infoBox: document.getElementById('f_info_box')?.value,
+      tnc: document.getElementById('f_tnc_md')?.value
+    },
+    overrides: { providers, games }
+  };
+}
+
+function validatePromotionData(data, level = 'save') {
+  const errors = [];
+  if (!data) return ["No data provided"];
+
+  const reward = data.reward || {};
+  const wagering = data.wagering || {};
+  const ui = data.ui || {};
+  const overrides = data.overrides || { providers: [], games: [] };
+
+  // Basic Format Validation (Save level)
+  if (data.minDep && isNaN(data.minDep)) errors.push("Min Deposit must be a number.");
+  if (data.maxDep && isNaN(data.maxDep)) errors.push("Max Deposit must be a number.");
+  if (data.minDep && data.maxDep && parseFloat(data.maxDep) < parseFloat(data.minDep)) {
+    errors.push("Max Deposit must be greater than or equal to Min Deposit.");
+  }
+  
+  // Structure Validation (No duplicates) - Fixed Logic
+  const providerIds = (overrides.providers || []).map(p => p.id).filter(id => id);
+  if (new Set(providerIds).size !== providerIds.length) {
+    errors.push("Duplicate providers detected in overrides.");
+  }
+  const gameIds = (overrides.games || []).map(g => g.id).filter(id => id);
+  if (new Set(gameIds).size !== gameIds.length) {
+    errors.push("Duplicate games detected in overrides.");
+  }
+
+  // Strict Validation (Enable level)
+  if (level === 'enable') {
+    if (!data.name || !data.name.trim()) errors.push("Promotion Name is required.");
+    if (!data.start) errors.push("Start Time is required.");
+    
+    if (reward.type === 'fixed' && !reward.amount) errors.push("Bonus Amount is required.");
+    if (reward.type === 'percent' && !reward.percentage) errors.push("Bonus Percentage is required.");
+    if (!wagering.multiplier || isNaN(wagering.multiplier)) errors.push("Valid WR Multiplier is required.");
+    
+    // UI Preview Fields
+    if (!ui.tag || !ui.tag.trim()) errors.push("Promotion Tag (Badge) is required.");
+    if (!ui.title || !ui.title.trim()) errors.push("Main Title is required.");
+    if (!ui.summary || !ui.summary.trim()) errors.push("Subtext / Summary is required.");
+
+    // AB Test Validation
+    if (data.scope === 'abtest' && (!data.abSuffixes || data.abSuffixes.length === 0)) {
+      errors.push("At least one account suffix must be selected for AB testing.");
+    }
+  }
+
+  return errors;
+}
+
+function submitPromotionAction(type) {
+  const data = collectPromotionData();
+  const level = type === 'enable' ? 'enable' : 'save';
+  const errors = validatePromotionData(data, level);
+
+  if (errors.length > 0) {
+    const errorMsg = type === 'enable' 
+      ? "Unable to enable this promotion. Please complete the required fields below:\n\n" + errors.join('\n')
+      : "Failed to save. Please check the highlighted fields:\n\n" + errors.join('\n');
+    alert(errorMsg);
+    return;
+  }
+
+  if (type === 'enable') {
+    // Show confirmation modal for Enable
+    const modalContainer = document.getElementById('modalContainer');
+    const modalBox = document.getElementById('modalBox');
+    modalContainer.className = 'modal-overlay modal-success open';
+    modalBox.innerHTML = `
+      <div class="modal-header">✅ Confirm Activation</div>
+      <div class="modal-body">
+        <p>This promotion has passed all validation checks. Are you sure you want to <strong>Enable</strong> it now?</p>
+        <p style="font-size:0.85rem; color:var(--text-gray); margin-top:8px">It will be immediately visible and claimable by eligible players.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" style="background:#10B981; border-color:#10B981" onclick="finalizePromotionSubmit(true)">Confirm & Enable</button>
+      </div>
+    `;
+    // Store data temporarily for final submit
+    window._tempPromoData = data;
+  } else {
+    finalizePromotionSubmit(false, data);
+  }
+}
+
+function finalizePromotionSubmit(isEnable, data = null) {
+  const finalData = data || window._tempPromoData;
+  const now = new Date();
+  const timestamp = now.toLocaleString();
+
+  const payload = {
+    ...finalData,
+    status: isEnable,
+    cost: '$0.00',
+    claims: '0 / 0',
     createdBy: 'Admin',
     updatedAt: timestamp
   };
 
-  alert('Publish Success! Generated ID: ' + payload.id + '\n\nPayload structured for database:\n' + JSON.stringify(payload, null, 2));
+  alert(isEnable? 'Promotion enabled successfully!' : 'Saved successfully.');
   
   MOCK_PROMOTIONS.unshift(payload);
+  closeModal();
   navigateTo('promotions');
+}
+
+function submitPromotion() {
+  // Legacy function replaced by submitPromotionAction
+  submitPromotionAction('save');
 }
 
 // =============================================================================
